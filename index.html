@@ -1,0 +1,261 @@
+<!--
+	
+	Um clone do famoso jogo Breakout escrito totalmente em JavaScript.
+
+	Angelito Goulart
+	angelitomgoulart@gmail.com
+	www.angelitomg.com
+
+	Thanks to: 
+	https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript
+
+-->
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Breakout JS</title>
+		<style>
+			* { margin: 0; padding: 0; }
+			#gameCanvas { width: 480px; height: 320px;	background: #eee; margin: 0 auto; display: block; margin-top: 100px; }
+		</style>
+	</head>
+	<body>
+		<canvas id="gameCanvas" width="480" height="320"></canvas>
+	</body>
+	<script>
+
+		// Obtem o objeto para manipulacao do canvas
+		var canvas = document.getElementById("gameCanvas");
+		var ctx = canvas.getContext("2d");
+
+		// Define a variavel para calculo de colisao da bola
+		var ballRadius = 10;
+
+		// Variaveis que definem o estado das teclas pressionadas
+		var leftPressed = false;
+		var rightPressed = false;
+
+		// Define o tamanho da barra
+		var paddleHeight = 10;
+		var paddleWidth = 75;
+		var paddlePadding = 10;
+		var paddleX = (canvas.width-paddleWidth)/2;
+		var paddleY = canvas.height - paddleHeight - paddlePadding;
+
+		// Posicao inicial da bola
+		var x = canvas.width / 2;
+		var y = canvas.height / 2;
+
+		// Velocidade do movimento da bola
+		var dx = 1;
+		var dy = 1;
+
+		// Configuracoes dos tijolos
+		var brickRowCount = 3;
+		var brickColumnCount = 25;
+		var brickWidth = 15;
+		var brickHeight = 20;
+		var brickPadding = 2;
+		var brickOffsetTop = 30;
+		var brickOffsetLeft = 30;
+		var bricks = [];
+		for(c=0; c<brickColumnCount; c++) {
+			bricks[c] = [];
+			for(r=0; r<brickRowCount; r++) {
+				bricks[c][r] = { x: 0, y: 0, status: 1};
+			}
+		}
+
+		// Pontuacao do jogador
+		var score = 0;
+
+		// Funcao executada quando uma tecla for pressionada
+		function keyDownHandler(e)
+		{
+			
+			if (e.keyCode == 39) {
+
+				// Seta direita
+				rightPressed = true;	
+
+			} else if (e.keyCode == 37) {
+
+				// Seta esquerda
+				leftPressed = true;
+
+			}
+
+		}
+
+		// Funcao executada quando uma tecla for solta
+		function keyUpHandler(e)
+		{
+
+			if (e.keyCode == 39) {
+			
+				// Seta direita	
+				rightPressed = false;	
+
+			} else if (e.keyCode == 37)  {
+				
+				// Seta esquerda
+				leftPressed = false;
+
+			}
+
+		}
+
+		// Funcao para desenhar a bola
+		function drawBall() 
+		{
+			ctx.beginPath();
+			ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+			ctx.fillStyle = "#ff0000";
+			ctx.fill();
+			ctx.closePath();
+		}
+
+		// Funcao para desenhar a barra
+		function drawPaddle()
+		{
+			ctx.beginPath();
+			ctx.rect(paddleX, paddleY, paddleWidth, paddleHeight);
+			ctx.fillStyle = '#1a6ca4';
+			ctx.fill();
+			ctx.closePath();
+		}
+
+		// Funcao responsavel por detectar a colisao da bola com os tijolos
+		function collisionDetection()
+		{
+
+			// Percorre todos os tijolos
+			for (c = 0; c < brickColumnCount; c++) {
+				for (r = 0; r < brickRowCount; r++) {
+					b = bricks[c][r];
+
+					// Verifica se o tijolo ainda nao foi destruido
+					if (b.status == 1) {
+
+						// Verifica se a bola esta em colisao com o tijolo
+						if (x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+
+							// Desativa o tijolo, rebate a bola e incrementa a pontuacao
+							dy = -dy;
+							b.status = 0;
+							score++;
+
+						}
+
+						// Verifica se todos os tijolos foram destruidos (jogador venceu)
+						if (score == brickColumnCount * brickRowCount) {
+							alert('CONGRATULATIONS, YOU WIN!');
+							document.location.reload();
+						}
+
+					}
+				}
+			}
+		}
+
+		// Funcao responsavel por exibir a pontuacao do usuario na tela
+		function drawScore()
+		{
+			ctx.font = '16px arial';
+			ctx.fillStyle = '#1a6ca4';
+			ctx.fillText('Score: ' + score, 8, 20);
+		}
+
+		// Funcao para desenhar os tijolos na tela
+		function drawBricks() {
+			for(c=0; c<brickColumnCount; c++) {
+				for(r=0; r<brickRowCount; r++) {
+
+					// Desenha o tijolo somente se ele estiver "ativo", ou seja, se ainda nao foi destruido
+					if (bricks[c][r].status == 1) {
+						var brickX = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+						var brickY = (r*(brickHeight+brickPadding))+brickOffsetTop;
+						bricks[c][r].x = brickX;
+						bricks[c][r].y = brickY;
+						ctx.beginPath();
+						ctx.rect(brickX, brickY, brickWidth, brickHeight);
+						ctx.fillStyle = "#1a6ca4";
+						ctx.fill();
+						ctx.closePath();
+					}
+				}
+			}
+		}
+
+		// Funcao para desenhar os elementos da tela
+		function mainLoop() 
+		{
+
+			// Limpa o canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			// Desenha a barra
+			drawPaddle();
+
+			// Desenha a bola
+			drawBall();
+
+			// Detecta a colisao da bola com os tijolos
+			collisionDetection();
+
+			// Exibe a pontuacao na tela
+			drawScore();
+
+			// Desenha os tijolos
+			drawBricks();
+
+			// Incrementa a direcao da bola, ou seja, faz o movimento
+			x += dx;
+			y += dy;
+
+			// Detecta a colisao da bola com as paredes laterais
+			if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+				dx = -dx;
+			}
+
+			// Colisao com o topo da tela
+			if(y + dy < ballRadius) {
+
+				// Inverte a direcao da bola
+				dy = -dy;
+
+			} else if (y + dy > canvas.height - ballRadius - paddlePadding - paddleHeight) {
+
+				// Colisao com o fim da tela
+
+				// Caso a colisao seja com a barra, a bola e rebatida
+				if (x > paddleX && x < paddleX + ballRadius + paddleWidth) {
+
+					dy = -dy;
+
+				} else {
+
+					// Caso contrario, game over
+					alert('GAME OVER :(');
+					document.location.reload();
+
+				}
+
+			}
+
+			// Caso uma tecla esteja pressionada, move a barra de controle
+			if (rightPressed && paddleX + paddlePadding < canvas.width - paddleWidth) paddleX += 7;
+			if (leftPressed && paddleX - paddlePadding > 0) paddleX -= 7;
+
+		}
+
+		// Define as funcoes que irao manipular as entradas do jogador
+		document.addEventListener("keydown", keyDownHandler, false);
+		document.addEventListener("keyup", keyUpHandler, false);
+
+		// Chama o loop principal do jogo e define a frequencia com que sera executado
+		setInterval(mainLoop, 10);
+
+	</script>
+</html>
